@@ -244,7 +244,7 @@ class ModelWithReplayBufferParams(ModelParams):
     num_batches: int = None
     mini_batch_size: int = None
     rollout_batch_size: int = None
-    buffer_storage_device: Literal["gpu", "cpu"] = "auto"
+    buffer_storage_device: Literal["auto", "cpu"] = "cpu"
     buffer_size: int = 100_000
     # replay buffers allow us to gather experience in evaluation mode
     # Thus, memory leakage through growing gradient information is avoided
