@@ -1,0 +1,32 @@
+# @package _global_
+defaults:
+  - override /lr_scheduler: cosine
+
+model:
+  algorithm: sl
+  inner_epochs: #  5
+    start: 5
+    end: 10
+    total_steps: ${train.epochs}
+  mini_batch_size: 2000
+  num_starts: 128
+  eval_per_agent: True
+  eval_multistep: True
+  lookback_intervals: 0
+  always_clear_buffer: True
+  update_after_every_batch: False
+  loss: listnet
+  penalty_coef:
+    start: 0.001
+    end: 0.00001
+    total_steps: ${train.epochs}
+  entropy_coef: 
+    start: 0.0001
+    end: 0.00001
+    total_steps: ${train.epochs}
+
+  buffer_size: 100000
+
+train:
+  batch_size: 1000
+  dataset_size: 4000

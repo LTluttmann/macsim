@@ -1,0 +1,40 @@
+# @package _global_
+defaults:
+  - _self_
+  - callbacks: default.yaml 
+  - hydra: default.yaml # having hydra before logger in precedence order, so that logger can override run.dir
+  - paths: default.yaml
+  - policy: default.yaml
+  - lr_scheduler: null 
+  - model: null  # model after schedule so it can override the default
+  - env: ffsp/20j-444m
+  - logger: null # logger after env, so that logger has access to env variables
+
+lr_scheduler: null
+run_name: ${env.id}
+assert_idle: False
+
+train:  
+  train: true
+  dataset_size: 2000
+  batch_size: 200
+  optimizer_kwargs:
+    policy_lr: 1e-4
+    weight_decay: 1e-6
+  max_grad_norm: 1.0
+  epochs: 50
+  lr_reduce_on_plateau_patience: null
+  lr_scheduler: ${lr_scheduler}
+  decode_type: sampling
+
+val:
+  dataset_size: 10000
+  batch_size: 2000
+  decode_type: greedy
+
+test:
+  dataset_size: 0
+  batch_size: 10
+  num_decoding_samples: 1280
+  decode_type: sampling
+  hybrid_decoding: True

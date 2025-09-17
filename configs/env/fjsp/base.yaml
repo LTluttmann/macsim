@@ -1,0 +1,37 @@
+# @package _global_
+env:
+  env: fjsp
+  min_processing_time: 1
+  max_processing_time: 20
+  id: ${env.env}-${env.num_jobs}j-${env.num_machines}m
+  
+
+policy:
+  num_heads: 8
+  input_dropout: 0.1
+  activation: gelu
+  norm_first: True
+  bias: True
+  mask_no_edge: True
+  param_sharing: True
+  num_encoder_layers: 4
+  ms_scores_tanh_clip: 1.0
+
+train:
+  epochs: 50
+  batch_size: 2000
+  dataset_size: 4000
+
+
+val:
+  data_dir: 
+    - ${paths.test_data_dir}/fjsp/song/${env.num_jobs}j_${env.num_machines}m
+
+test:
+  batch_size: 1
+  data_dir:
+    - ${paths.test_data_dir}/fjsp/song/${env.num_jobs}j_${env.num_machines}m
+    # - ${paths.test_data_dir}/fjsp/Brandimarte
+    # - ${paths.test_data_dir}/fjsp/Hurink_edata
+    # - ${paths.test_data_dir}/fjsp/Hurink_rdata
+    # - ${paths.test_data_dir}/fjsp/Hurink_vdata

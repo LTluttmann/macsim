@@ -1,0 +1,12 @@
+policy: macsim
+encoder: matnet
+decoder: attn
+embed_dim: 256
+num_heads: 8
+input_dropout: 0.1
+activation: gelu
+norm_first: True
+bias: True
+mask_no_edge: True
+param_sharing: True
+num_encoder_layers: 4

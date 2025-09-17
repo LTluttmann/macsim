@@ -1,0 +1,11 @@
+# @package _global_
+defaults:
+  - /env/hcvrp/base
+
+env:
+  num_loc: 60
+  num_agents: 7
+
+train:
+  optimizer_kwargs:
+    policy_lr: 1e-4
