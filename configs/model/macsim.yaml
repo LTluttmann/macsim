@@ -7,7 +7,7 @@ model:
   inner_epochs: #  5
     start: 5
     end: 10
-    total_steps: ${train.epochs}
+    total_steps: ${eval:'${train.epochs} // 2'}
   mini_batch_size: 2000
   num_starts: 128
   eval_per_agent: True
@@ -20,6 +20,7 @@ model:
     start: 0.001
     end: 0.00001
     total_steps: ${train.epochs}
+    scheduler_name: exponential
   entropy_coef: 
     start: 0.0001
     end: 0.00001

@@ -313,8 +313,8 @@ class LearningAlgorithm(LightningModule):
             return NumericParameter(**param, dtype=dtype)
         elif isinstance(param, (ListConfig, list, tuple)):
             min_val, max_val, update_coef = param
-            val = max_val if update_coef < 1 else min_val
-            return NumericParameter(val, dtype=dtype)
+            start, end = (max_val, min_val) if update_coef < 1 else (min_val, max_val)
+            return NumericParameter(start, end=end, update_coef=update_coef, dtype=dtype)
         else:
             return NumericParameter(param, dtype=dtype)
 

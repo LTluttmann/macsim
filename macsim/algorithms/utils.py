@@ -403,10 +403,12 @@ import math
 # Scheduler factory functions
 # ----------------------------
 
-def exponential_scheduler(start: float, end: float, total_steps: int) -> Callable[[int], Numeric]:
+def exponential_scheduler(start: float, end: float, total_steps: int, epsilon: float = 1e-9) -> Callable[[int], Numeric]:
     """Exponential decay from start → end over total_steps."""
+    end = max(end, epsilon)  # avoid gamma of zero
+    start = max(start, epsilon) # avoid div by zero
     gamma = (end / start) ** (1 / max(total_steps, 1))
-    return lambda step: start * (gamma ** step)
+    return lambda step: start * (gamma ** min(step, total_steps))
 
 
 def linear_scheduler(start: float, end: float, total_steps: int) -> Callable[[int], Numeric]:
@@ -423,6 +425,18 @@ def constant_scheduler(start: float, end: float, total_steps: int) -> Callable[[
     """Constant value (always returns start)."""
     return lambda step: start
 
+def legacy_multiplicative_scheduler(start: float, end: float, update_coef: float) -> Callable[[int], Numeric]:
+    """Legacy multiplicative scheduler from start → end."""
+    if update_coef >= 1 and end is not None:
+        bound_fn = lambda x: min(x, end)
+    elif update_coef < 1 and end is not None:
+        bound_fn = lambda x: max(x, end)
+    else:
+        bound_fn = lambda x: x
+    def scheduler(step: int) -> Numeric:
+        value = start * (update_coef ** step)
+        return bound_fn(value)
+    return scheduler
 
 # Registry
 SCHEDULER_REGISTRY: Dict[str, Callable[[float, float, int], Callable[[int], Numeric]]] = {
@@ -446,10 +460,14 @@ class NumericParameter:
     scheduler: Optional[Callable[[int], Numeric]] = None  # internal callable
     dtype: Optional[Union[Type, Callable]] = None
     step_count: int = field(default=0, init=False)
+    update_coef: float = None
 
     def __post_init__(self):
         # Build scheduler if given by name
-        if self.scheduler_name is not None and self.end is not None and self.total_steps is not None:
+        if self.update_coef is not None:
+            self.scheduler = legacy_multiplicative_scheduler(self.start, self.end, self.update_coef)
+        
+        elif self.scheduler_name is not None and self.end is not None and self.total_steps is not None:
             if self.scheduler_name not in SCHEDULER_REGISTRY:
                 raise ValueError(f"Unknown scheduler '{self.scheduler_name}'. Available: {list(SCHEDULER_REGISTRY)}")
             

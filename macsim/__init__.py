@@ -7,6 +7,7 @@ INIT_FINISH = 9999.
 FILEPATH = os.path.realpath(os.path.dirname(__file__))
 ROOTDIR = os.path.split(FILEPATH)[0]
 OmegaConf.register_new_resolver("ROOTDIR", lambda: ROOTDIR)
+OmegaConf.register_new_resolver("eval", eval)
 
 if torch.cuda.is_available():
     num_gpus = torch.cuda.device_count()
