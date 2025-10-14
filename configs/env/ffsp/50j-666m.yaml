@@ -1,0 +1,7 @@
+defaults:
+  - /env/ffsp/base
+
+num_jobs: 50
+num_stage: 3
+min_ma_per_stage: 6
+max_ma_per_stage: 6

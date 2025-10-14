@@ -1,0 +1,8 @@
+# @package _global_
+defaults:
+  - /policy/default
+
+policy:
+  policy: sa_attn
+  encoder: matnet
+  decoder: attn

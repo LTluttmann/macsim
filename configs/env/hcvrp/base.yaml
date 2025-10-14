@@ -1,0 +1,35 @@
+# @package _global_
+env:
+  env: hcvrp
+  min_loc: 0
+  max_loc: 1
+  id: ${env.env}-${env.num_loc}n-${env.num_agents}m
+  num_augment: 8
+
+model:
+  inner_epochs: 5
+  
+policy:
+  encoder: am
+  num_heads: 16
+  input_dropout: 0.1
+  activation: gelu
+  norm_first: True
+  bias: True
+  num_encoder_layers: 4
+  use_context_emb: True
+  # use_cross_mha: False
+
+train:
+  optimizer_kwargs:
+    policy_lr: 5e-5
+  epochs: 100
+  batch_size: 1000
+  dataset_size: 1000
+
+
+val:
+  data_dir: ${paths.test_data_dir}/hcvrp/hcvrp_${env.num_loc}_${env.num_agents}_seed24610.npz
+
+test:
+  data_dir: ${paths.test_data_dir}/hcvrp/hcvrp_${env.num_loc}_${env.num_agents}_seed24610.npz

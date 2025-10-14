@@ -1,0 +1,70 @@
+# @package _global_
+defaults:
+  - fjsp/10j-5m@env.list.10j-5m
+  - fjsp/20j-5m@env.list.20j-5m
+  - fjsp/15j-10m@env.list.15j-10m
+  - fjsp/20j-10m@env.list.20j-10m
+  - override /model: sl
+  - override /lr_scheduler: cosine
+
+env:
+  id: fjsp-multi-instance
+
+model:
+  inner_epochs: 5
+  rollout_batch_size:
+    10j_5m: 250
+    20j_5m: 125
+    15j_10m: 50
+    20j_10m: 50
+  mini_batch_size: 256
+  num_starts: 150
+  always_clear_buffer: True
+  update_after_every_batch: False
+  buffer_size: 400000
+  buffer_storage_device: cpu
+  use_advantage_weights: False
+  entropy_coef: 
+    start: 0.01
+    end: 0.001
+    total_steps: ${train.epochs}
+  log_grad_norm: False
+
+
+train:
+  epochs: 100
+  batch_size: 250
+  dataset_size: 4000
+  optimizer_kwargs:
+    policy_lr: 5e-5
+    weight_decay: 1e-6
+    use_adamw: True
+  lr_reduce_on_plateau_patience: 10
+  max_grad_norm: 1.5
+  accumulate_grad_batches: 4
+
+lr_scheduler:
+  scheduler_kwargs:
+    min_lr: 1e-7
+    num_warmup_steps: 3
+    num_training_steps: ${train.epochs}
+
+val:
+  batch_size: 2000
+  dataset_size: 30000
+  data_dir: null
+
+
+test:
+  batch_size: 1
+  data_dir:
+    # - ${paths.test_data_dir}/fjsp/song/10j_5m
+    # - ${paths.test_data_dir}/fjsp/song/15j_10m
+    # - ${paths.test_data_dir}/fjsp/song/20j_5m
+    - ${paths.test_data_dir}/fjsp/song/20j_10m
+    - ${paths.test_data_dir}/fjsp/song/30j_10m
+    - ${paths.test_data_dir}/fjsp/song/40j_10m
+    - ${paths.test_data_dir}/fjsp/Brandimarte
+    - ${paths.test_data_dir}/fjsp/Hurink_edata
+    - ${paths.test_data_dir}/fjsp/Hurink_rdata
+    - ${paths.test_data_dir}/fjsp/Hurink_vdata

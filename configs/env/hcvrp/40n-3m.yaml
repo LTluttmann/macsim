@@ -1,0 +1,5 @@
+defaults:
+  - /env/hcvrp/base
+
+num_loc: 40
+num_agents: 3

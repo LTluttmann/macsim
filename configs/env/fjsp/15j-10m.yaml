@@ -1,0 +1,9 @@
+defaults:
+  - /env/fjsp/base
+
+num_jobs: 15
+num_machines: 10
+min_ops_per_job: 8
+max_ops_per_job: 12
+min_eligible_ma_per_op: 1
+max_eligible_ma_per_op: 10
