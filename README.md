@@ -2,7 +2,7 @@
 
 MACSIM: Multi-action Self-Improvement Method for Neural Combinatorial Optimization
 
-<img src="./assets/macsim.png" alt="Training Loss Curve" height="400">
+<img src="./assets/macsim.png" alt="Overview of MACSIM" height="400">
 
 ## Overview
 
