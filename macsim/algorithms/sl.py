@@ -165,13 +165,12 @@ class SelfImprovement(LearningAlgorithmWithReplayBuffer):
 
         # data gathering loop
         for i in range(0, bs, rollout_batch_size):
-            torch.cuda.empty_cache()
             next_td = orig_state[i : i + rollout_batch_size]
             self._collect_experience(next_td, instance_id)
 
         if self.trainer.is_last_batch or self.update_after_every_batch:
-            torch.cuda.empty_cache()
             self._update()
+
 
     def validation_step(self, batch, batch_idx, dataloader_idx = 0):
         state, instance_id = self.env.reset(batch)

@@ -494,7 +494,6 @@ class NumericParameter:
         return self
     
 
-
 def count_conflicting_agents_per_step(actions: torch.Tensor, skip_idx: int = 20):
     """
     actions: (B, T, M) long tensor of argmax task indices per agent

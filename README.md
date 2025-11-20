@@ -1,15 +1,17 @@
 # MACSIM
 
-**Official codebase for the paper:**  
-**Multi-Action Self-Improvement for Neural Combinatorial Optimization (MACSIM)**  
-*(under review at ICLR 2026)*
+MACSIM: Multi-action Self-Improvement Method for Neural Combinatorial Optimization
 
----
+<img src="./assets/macsim.png" alt="Overview of MACSIM" height="400">
 
 ## Overview
 
-**MACSIM** is a research framework that implements the multi-action self-improvement method introduced in the accompanying paper.  
-It targets cooperative multi-agent combinatorial optimization problems by predicting **joint agent–task assignments** at each decision step and training with a **permutation-invariant set-based loss**. This enables coordinated multi-agent behavior, improved sample efficiency, and faster solution generation during self-improvement.
+**MACSIM** is a learning algorithm + neural policy that utilizes self-improvement to learn to solve multi-agent CO problems like min-max VRPs or scheduling problems. 
+It targets these cooperative multi-agent combinatorial optimization problems by predicting **joint agent–task assignments** at each decision step and training with a **permutation-invariant set-based loss**. This enables coordinated multi-agent behavior, improved sample efficiency, and faster solution generation during self-improvement.
+
+Below figure shows the training curves of MACSIM and standard self-improvement method (SLIM) on different FFSP instances:
+
+<img src="./assets/training_curves_ffsp.png" alt="Training Loss Curve" height="400">
 
 ---
 
