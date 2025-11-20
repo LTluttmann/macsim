@@ -492,3 +492,40 @@ class NumericParameter:
         """Advance one step."""
         self.step_count += 1
         return self
+    
+
+
+def count_conflicting_agents_per_step(actions: torch.Tensor, skip_idx: int = 20):
+    """
+    actions: (B, T, M) long tensor of argmax task indices per agent
+    skip_idx: index of skip token (can be selected multiple times without conflict)
+
+    Returns:
+        conflicts_agents: (B, T) long tensor, number of conflicting agents per step
+    """
+    B, T, M = actions.shape
+
+    # Flatten batch and time so we can loop over steps if we want
+    actions_flat = actions.view(-1, M)  # (B*T, M)
+
+    conflicts_agents = []
+
+    for step_actions in actions_flat:
+        # Drop skip-token assignments
+        valid = step_actions[step_actions != skip_idx]
+
+        if valid.numel() == 0:
+            # No real tasks chosen – no conflicts
+            conflicts_agents.append(0)
+            continue
+
+        unique_tasks, counts = valid.unique(return_counts=True)
+
+        # Number of agents in conflict = total agents on real tasks - number of unique tasks
+        n_conflicting_agents = valid.numel() - unique_tasks.numel()
+        conflicts_agents.append(int(n_conflicting_agents))
+
+    conflicts_agents = torch.tensor(conflicts_agents, device=actions.device, dtype=torch.long)
+    return conflicts_agents.view(B, T)
+
+

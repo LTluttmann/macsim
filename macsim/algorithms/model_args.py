@@ -23,11 +23,11 @@ class PPOParams(ModelWithReplayBufferParams):
 class SelfImprovementParameters(ModelWithReplayBufferParams):
     algorithm: str = "sl"
     entropy_coef: float = 0.0
-    loss: str = "ce"
+    loss: str = "listnet"
     listnet_alpha: float = 0.0
     num_starts: int = 128
-    lookback_intervals: int = None
-    always_clear_buffer: bool = False
+    lookback_intervals: int = 0
+    always_clear_buffer: bool = True
     update_after_every_batch: bool = False
     use_advantage_weights: bool = False
     ref_policy_warmup: int = 0

@@ -28,9 +28,9 @@ def config_to_dict(config_struct: Union[OmegaConf, Dict]):
 @dataclass(frozen=True)
 class DecodingConfig:
     decode_type: Literal["greedy", "sampling"]
-    tanh_clipping: float
-    top_p: float
-    temperature: float
+    tanh_clipping: float = 10.0
+    top_p: float = 1.0
+    temperature: float = 1.0
     num_starts: int = None
     num_augment: int = None
     num_strategies: int = None
@@ -183,7 +183,8 @@ class PolicyParams:
 
     def __post_init__(self):
         if self.is_multiagent_policy:
-            self.env.env = "ma_" + self.env.env
+            if not "ma_" in self.env.env:
+                self.env.env = "ma_" + self.env.env
             self.env.multiagent = True
         else:
             self.env.multiagent = False
@@ -240,7 +241,7 @@ class ModelParams:
 
 @dataclass(kw_only=True)
 class ModelWithReplayBufferParams(ModelParams):
-    inner_epochs: int = 1
+    inner_epochs: int = 3
     num_batches: int = None
     mini_batch_size: int = None
     rollout_batch_size: int = None
@@ -334,7 +335,7 @@ class TrainingParams(PhaseParams):
 
 
     optimizer_kwargs: Dict[str, Any] = field(default_factory= lambda: {
-        "policy_lr": 2e-4,
+        "policy_lr": 1e-4,
     })
     lr_scheduler: Optional[Union[OmegaConf, DictConfig]] = None
     lr_scheduler_interval: int = 1
@@ -365,7 +366,7 @@ class TrainingParams(PhaseParams):
 
 @dataclass(kw_only=True)
 class ValidationParams(PhaseParams):
-    ...
+    eval_conflicts: bool = False
 
 
 @dataclass(kw_only=True)

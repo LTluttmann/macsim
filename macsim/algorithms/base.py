@@ -687,7 +687,7 @@ class EvalModule(LearningAlgorithm):
     
     @classmethod
     def init_from_checkpoint(cls, checkpoint_path, env_params, model_params = None, train_params = None, val_params = None, test_params = None):
-        assert test_params is not None
+        # assert test_params is not None
         model, model_params = super().init_from_checkpoint(checkpoint_path, env_params, model_params, train_params, val_params, test_params)
         return cls(
             model.env,

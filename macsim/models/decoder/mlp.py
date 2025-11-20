@@ -24,15 +24,15 @@ class AgentActionPointer(nn.Module):
         self.num_heads = params.num_heads
         self.input_dim = params.embed_dim
 
-        self.final_trf_block = TransformerEncoderLayer(
-            d_model=self.input_dim,
-            nhead=params.num_heads,
-            dim_feedforward=params.feed_forward_hidden,
-            dropout=params.dropout,
-            activation=params.activation,
-            norm_first=params.norm_first,
-            batch_first=True,
-        )
+        # self.final_trf_block = TransformerEncoderLayer(
+        #     d_model=self.input_dim,
+        #     nhead=params.num_heads,
+        #     dim_feedforward=params.feed_forward_hidden,
+        #     dropout=params.dropout,
+        #     activation=params.activation,
+        #     norm_first=params.norm_first,
+        #     batch_first=True,
+        # )
 
         self.mlp = MLP(
             input_dim=self.input_dim,
@@ -60,18 +60,18 @@ class AgentActionPointer(nn.Module):
         return agent_action_logits
     
 
-    def _sa_block(self, job_ma_embs: torch.Tensor, td: TensorDict, env: Union[Environment, MultiAgentEnvironment]):
-        bs, nm, nj, emb = job_ma_embs.shape
+    # def _sa_block(self, job_ma_embs: torch.Tensor, td: TensorDict, env: Union[Environment, MultiAgentEnvironment]):
+    #     bs, nm, nj, emb = job_ma_embs.shape
 
-        attn_mask = self._get_attn_mask(td, env)
+    #     attn_mask = self._get_attn_mask(td, env)
 
-        # transformer layer over final embeddings
-        job_ma_embs = self.final_trf_block(
-            src=rearrange(job_ma_embs, "b m j d -> b (m j) d"), 
-            src_mask=attn_mask
-        )
-        job_ma_embs = job_ma_embs.view(bs, nm, nj, emb)
-        return job_ma_embs
+    #     # transformer layer over final embeddings
+    #     job_ma_embs = self.final_trf_block(
+    #         src=rearrange(job_ma_embs, "b m j d -> b (m j) d"), 
+    #         src_mask=attn_mask
+    #     )
+    #     job_ma_embs = job_ma_embs.view(bs, nm, nj, emb)
+    #     return job_ma_embs
     
 
     def _get_attn_mask(self, td: torch.Tensor, env: Union[Environment, MultiAgentEnvironment]):

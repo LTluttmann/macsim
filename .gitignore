@@ -1,12 +1,12 @@
 data_dev/
 
-
+/notebooks
 logs/
 .vscode
 outputs/
 lightning_logs
 .neptune
-
+camp/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

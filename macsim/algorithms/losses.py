@@ -4,39 +4,6 @@ import torch.nn.functional as F
 from tensordict import TensorDict
 from macsim.utils.ops import gather_by_index
 
-# class Loss(abc.ABC):
-
-#     def __init__(self, eval_per_agent):
-#         self.eval_per_agent = eval_per_agent
-
-#     def _logits_to_logp(self, logits: torch.Tensor, mask: torch.Tensor):
-#         if torch.is_grad_enabled() and self.eval_per_agent:
-#             # when training we evaluate on a per agent basis
-#             # perform softmax per agent
-#             logp = self.dec_strategy.logits_to_logp(logits=logits, mask=mask)
-#             # flatten logp for selection
-#             flat_logp = rearrange(logp, "b m j -> b (m j)")
-
-#         else:
-#             # when rolling out, we sample iteratively from flattened prob dist
-#             flat_logp = self.dec_strategy.logits_to_logp(logits=logits.flatten(1,2), mask=mask.flatten(1,2))
-            
-#         return flat_logp
-    
-
-#     @abc.abstractmethod
-#     def __call__(self, logits, td, env):
-#         pass
-
-
-
-# class CrossEntropy(Loss):
-
-
-
-
-#     def __call__(self, logits, td, env):
-
 
 
 def ce_loss(

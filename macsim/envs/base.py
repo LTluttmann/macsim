@@ -171,8 +171,6 @@ class Environment(metaclass=abc.ABCMeta):
     @classmethod
     def initialize(cls, params: EnvParams) -> Type["Environment"]:
         env = params.env
-        # if params.multiagent or multiagent:
-        #     env = "ma_" + env
         return env_registry[env](params=params)
 
     @staticmethod

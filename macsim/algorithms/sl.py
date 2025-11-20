@@ -13,9 +13,10 @@ from macsim.utils.config import TrainingParams, ValidationParams, TestParams
 
 from macsim.utils.ops import unbatchify, gather_by_index
 from macsim.algorithms.losses import loss_map, calc_adv_weights, listnet_loss
-
+from .utils import count_conflicting_agents_per_step
 
 _float = torch.get_default_dtype()
+
 
 class SelfImprovement(LearningAlgorithmWithReplayBuffer):
 
@@ -132,6 +133,8 @@ class SelfImprovement(LearningAlgorithmWithReplayBuffer):
 
         # (bs)
         best_states = gather_by_index(state_stack, best_idx, dim=1)
+        del state_stack
+        torch.cuda.empty_cache()
 
         if self.model_params.use_advantage_weights:
             advantage = best_reward - rewards.mean(1, keepdim=False)
@@ -162,11 +165,54 @@ class SelfImprovement(LearningAlgorithmWithReplayBuffer):
 
         # data gathering loop
         for i in range(0, bs, rollout_batch_size):
+            torch.cuda.empty_cache()
             next_td = orig_state[i : i + rollout_batch_size]
             self._collect_experience(next_td, instance_id)
 
         if self.trainer.is_last_batch or self.update_after_every_batch:
+            torch.cuda.empty_cache()
             self._update()
+
+    def validation_step(self, batch, batch_idx, dataloader_idx = 0):
+        state, instance_id = self.env.reset(batch)
+        eval_conflicts = self.val_params.eval_conflicts and self.policy.ma_policy
+        out = self.policy.generate(state, self.env, return_logits=eval_conflicts)
+
+        if eval_conflicts:
+            reward = out[0]["reward"]
+            logits = out[1]["logits"]
+            skip_tok_idx = logits.size(-1) - 1 if self.env.wait_op_idx == -1 else 0
+            actions = torch.argmax(logits, dim=-1)
+            agent_conf_per_step = count_conflicting_agents_per_step(actions, skip_idx=skip_tok_idx)
+            self.log(
+                "val/n_agent_conflicts", 
+                agent_conf_per_step.float().mean(), 
+                prog_bar=False, 
+                on_step=False, 
+                on_epoch=True, 
+                sync_dist=True,
+                add_dataloader_idx=True,
+            )
+        else:
+            reward = out["reward"]
+
+        val_set_name = self.val_set_names[dataloader_idx]
+
+        if val_set_name == "synthetic":
+            self.validation_step_rewards[instance_id].append(reward)
+            metric_name = f"val/synthetic/{instance_id}/reward"
+        else:
+            metric_name = f"val/files/{val_set_name}/reward"
+
+        self.log(
+            metric_name, 
+            reward.mean(), 
+            prog_bar=True, 
+            on_step=False, 
+            on_epoch=True, 
+            sync_dist=True,
+            add_dataloader_idx=False,
+        )
 
 
     def on_validation_epoch_end(self):
