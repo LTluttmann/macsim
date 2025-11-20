@@ -106,7 +106,8 @@ class MultiHeadAttentionLayer(nn.Module):
             embed_dim,
             hidden_dim,
             val_dim=None,
-            key_dim=None
+            key_dim=None,
+            bias=True,
     ):
         super(MultiHeadAttentionLayer, self).__init__()
 
@@ -123,17 +124,17 @@ class MultiHeadAttentionLayer(nn.Module):
 
         self.norm_factor = 1 / math.sqrt(key_dim)  # See Attention is all you need
 
-        self.Wq = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
-        self.Wk = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
-        self.Wv = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
+        self.Wq = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
+        self.Wk = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
+        self.Wv = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
 
-        self.Wq_2 = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
-        self.Wk_2 = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
-        self.Wv_2 = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
+        self.Wq_2 = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
+        self.Wk_2 = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
+        self.Wv_2 = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
 
-        self.Wq_3 = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
-        self.Wk_3 = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
-        self.Wv_3 = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
+        self.Wq_3 = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
+        self.Wk_3 = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
+        self.Wv_3 = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
         # self.alpha = nn.Parameter(torch.Tensor(n_heads, 1, 1))
         self.multi_head_combine = nn.Linear(n_heads * val_dim, embed_dim)
         self.multi_head_combine_2 = nn.Linear(n_heads * val_dim, embed_dim)
@@ -210,14 +211,15 @@ class GraphAttentionEncoder(nn.Module):
             n_layers,
             node_dim=None,
             normalization='batch',
-            feed_forward_hidden=512
+            feed_forward_hidden=512,
+            bias=True,
     ):
         super(GraphAttentionEncoder, self).__init__()
 
         self.init_agent_norm = Normalization(embed_dim, normalization)
         self.init_node_norm = Normalization(embed_dim, normalization)
         self.layers = nn.Sequential(*(
-            MultiHeadAttentionLayer(n_heads, embed_dim, embed_dim, feed_forward_hidden)
+            MultiHeadAttentionLayer(n_heads, embed_dim, embed_dim, feed_forward_hidden, bias=bias)
             for _ in range(n_layers)
         ))
 

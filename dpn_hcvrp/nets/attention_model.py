@@ -44,7 +44,7 @@ class AttentionModel(nn.Module):
                  problem,
                  agent_num=3,
                  depot_num=3,
-                 n_encode_layers=2,
+                 n_encode_layers=6,
                  tanh_clipping=10.,
                  mask_inner=True,
                  mask_logits=True,
@@ -52,6 +52,9 @@ class AttentionModel(nn.Module):
                  n_heads=8,
                  checkpoint_encoder=False,
                  shrink_size=None,
+                 handle_depot_separately=False,
+                 use_graph_emb=True,
+                 bias=True,
                  ft="N"):
         super(AttentionModel, self).__init__()
 
@@ -60,7 +63,7 @@ class AttentionModel(nn.Module):
         self.n_encode_layers = n_encode_layers
         self.decode_type = None
         self.temp = 1.0
-
+        self.use_graph_emb = use_graph_emb
         self.agent_num = agent_num
         self.depot_num = 1
         self.ft = ft
@@ -75,54 +78,56 @@ class AttentionModel(nn.Module):
         self.shrink_size = shrink_size
         self.positional_encoding = PostionalEncoding(d_model=embedding_dim, max_len=10000)
         self.RoPE = RotatePostionalEncoding(embedding_dim, 10000)
-        self.dist_alpha_1 = nn.Parameter(torch.rand((1,)), requires_grad=True)
+        self.dist_alpha_1 = nn.Parameter(torch.tensor([1.0]), requires_grad=True)
 
         self.agent_per = None
         # Problem specific context parameters (placeholder and step context dimension)
         node_dim = 3  # x, y
-        self.init_embed_depot = nn.Linear(2, embedding_dim)
-        self.init_embed_agent = nn.Linear(2, embedding_dim)
+        self.init_embed_depot = nn.Linear(2, embedding_dim, bias=bias)
+        self.init_embed_agent = nn.Linear(2, embedding_dim, bias=bias)
         self.decay = 1.0
-        self.pos_emb_proj = nn.Linear(embedding_dim, embedding_dim, bias=False)
+        self.pos_emb_proj = nn.Linear(embedding_dim, embedding_dim, bias=bias)
         self.alpha = nn.Parameter(torch.Tensor([1]))
 
-        self.dis_emb = nn.Linear(8, embedding_dim, bias=False)
+        self.dis_emb = nn.Linear(5, embedding_dim, bias=bias)
+        self.problem_embedder  = nn.Linear(3, embedding_dim, bias=bias)
+        self.agent_emb = nn.Linear(2, embedding_dim, bias=bias)
 
-        self.agent_emb = nn.Linear(2, embedding_dim, bias=False)
-
-        self.handle_depot_separately = True
+        self.handle_depot_separately = handle_depot_separately
         if self.handle_depot_separately:
             self.embedder = GraphMAttentionEncoder(
                 n_heads=n_heads,
                 embed_dim=embedding_dim,
                 n_layers=self.n_encode_layers,
-                normalization=normalization
+                normalization=normalization,
+                bias=bias,
             )
         else:
             self.embedder = GraphAttentionEncoder(
                 n_heads=n_heads,
                 embed_dim=embedding_dim,
                 n_layers=self.n_encode_layers,
-                normalization=normalization
+                normalization=normalization,
+                bias=bias
             )
 
         # Using the finetuned context Encoder
         if self.ft == "Y":
             self.contextual_emb = nn.Sequential(
-                nn.Linear(embedding_dim, 8 * embedding_dim, bias=False),
+                nn.Linear(embedding_dim, 8 * embedding_dim, bias=bias),
                 nn.ReLU(),
-                nn.Linear(8 * embedding_dim, embedding_dim, bias=False)
+                nn.Linear(8 * embedding_dim, embedding_dim, bias=bias)
             )
     
         self.init_embed = nn.Linear(node_dim, embedding_dim)
 
         # For each node we compute (glimpse key, glimpse value, logit key) so 3 * embedding_dim
-        self.project_node_embeddings = nn.Linear(embedding_dim, 3 * embedding_dim, bias=False)
-        self.project_fixed_context = nn.Linear(embedding_dim, embedding_dim, bias=False)
-        self.project_step_context = nn.Linear(2 * embedding_dim, embedding_dim, bias=False)
+        self.project_node_embeddings = nn.Linear(embedding_dim, 3 * embedding_dim, bias=bias)
+        self.project_fixed_context = nn.Linear(embedding_dim, embedding_dim, bias=bias)
+        self.project_step_context = nn.Linear(4 * embedding_dim, embedding_dim, bias=bias)
         assert embedding_dim % n_heads == 0
         # Note n_heads * val_dim == embedding_dim so input to project_out is embedding_dim
-        self.project_out = nn.Linear(embedding_dim, embedding_dim, bias=False)
+        self.project_out = nn.Linear(embedding_dim, embedding_dim, bias=bias)
 
     def set_decode_type(self, decode_type, temp=None):
         self.decode_type = decode_type
@@ -268,7 +273,7 @@ class AttentionModel(nn.Module):
         # The fixed context projection of the graph embedding is calculated only once for efficiency
         graph_embed = embeddings.mean(1)
         # fixed context = (batch_size, 1, embed_dim) to make broadcastable with parallel timesteps
-        fixed_context = self.project_fixed_context(graph_embed)[:, None, :]
+        fixed_context = self.project_fixed_context(graph_embed)[:, None, :] if self.use_graph_emb else None
 
         # The projection of the node embeddings for the attention is calculated once up front
         glimpse_key_fixed, glimpse_val_fixed, logit_key_fixed = self.project_node_embeddings(embeddings[:, :, :]).chunk(3, dim=-1)
@@ -297,7 +302,7 @@ class AttentionModel(nn.Module):
     def _get_log_p(self, fixed, state, agent_embeddings=None, normalize=True):
 
         query = self.project_step_context(
-            self._get_parallel_step_context(fixed.node_embeddings, state, agent_embeddings) # , fixed.context_node_projected)
+            self._get_parallel_step_context(fixed.node_embeddings, state, agent_embeddings, fixed.context_node_projected)
         )
 
         # Add Finetuned the context node to the query
@@ -319,7 +324,7 @@ class AttentionModel(nn.Module):
 
         return log_p, mask
 
-    def _get_parallel_step_context(self, embeddings, state, agent_embeddings=None, context_node_projected=None):
+    def _get_parallel_step_context(self, embeddings, state, agent_embeddings=None, problem_graph_projection=None):
         """
         Returns the context per step, optionally for multiple steps at once (for efficient evaluation of the model)
 
@@ -341,31 +346,32 @@ class AttentionModel(nn.Module):
         else:
             cur_agent_embedding = agent_embeddings.gather(dim=1, index=gathering_agent)
 
-        status_feats = torch.cat(
+        agent_status_feats = torch.cat(
             (
                 (state.lengths / state.agents_speed).gather(-1, state.agent_idx), 
                 state.agents_capacity.gather(-1, state.agent_idx) - state.used_capacity[..., None],
                 state.at_depot.float(),
                 state.max_distance / state.agents_speed.gather(-1, state.agent_idx), 
                 state.remain_max_distance / state.agents_speed.gather(-1, state.agent_idx), 
-                state.agent_counter / self.agent_num,
-                state.left_city / self.num_cities,
-                torch.log(1 + state.demand.sum(-1, keepdim=True)),
             ), -1
         )
-        distance_emb = self.dis_emb(status_feats)
-        cur_agent_embedding += distance_emb
+        distance_emb = self.dis_emb(agent_status_feats)
 
-
-        if context_node_projected is not None:
-            cur_node_embedding += context_node_projected
-
-        context_embed = torch.cat(
-            [cur_node_embedding, cur_agent_embedding],
-            dim=-1,
+        problem_status_emb = torch.cat(
+            (
+                state.agent_counter / self.agent_num,
+                state.left_city / self.num_cities,
+                torch.log(1 + (state.demand.sum(-1, keepdim=True) / (self.agent_num - state.agent_counter))),
+            ), -1
         )
+        problem_emb = self.problem_embedder(problem_status_emb)
+
+        if problem_graph_projection is not None:
+            problem_emb += problem_graph_projection
+
+        context_embeddings = [cur_node_embedding, cur_agent_embedding, distance_emb, problem_emb]
         # [B, hdim]
-        return context_embed
+        return torch.cat(context_embeddings, dim=-1)
 
 
     def _one_to_many_logits(self, query, glimpse_K, glimpse_V, logit_K, mask):

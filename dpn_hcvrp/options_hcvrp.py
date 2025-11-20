@@ -28,28 +28,24 @@ def get_options(args=None):
                         help='Clip the parameters to within +- this value using tanh. '
                              'Set to 0 to not perform any clipping.')
     parser.add_argument('--normalization', default='batch', help="Normalization type, 'batch' (default) or 'instance'")
-    parser.add_argument('--agent_min', default=2, type=int, help="decide the number of agent")
-    parser.add_argument('--agent_max', default=10, type=int, help="decide the number of robot")
-    parser.add_argument('--depot_min', default=5, type=int, help="decide the number of agent")
-    parser.add_argument('--depot_max', default=10, type=int, help="decide the number of robot")
 
     # Training
     parser.add_argument('--lr_model', type=float, default=1e-4, help="Set the learning rate for the actor network")
     parser.add_argument('--lr_critic', type=float, default=1e-4, help="Set the learning rate for the critic network")
-    parser.add_argument('--lr_decay', type=float, default=0.95, help='Learning rate decay per epoch')
+    parser.add_argument('--lr_decay', type=float, default=0.975, help='Learning rate decay per epoch')
     parser.add_argument('--eval_only', action='store_true', default=False, help='Set this value to only evaluate model')
-    parser.add_argument('--n_epochs', type=int, default=50, help='The number of epochs to train')
+    parser.add_argument('--n_epochs', type=int, default=100, help='The number of epochs to train')
     parser.add_argument('--seed', type=int, default=3333, help='Random seed to use')
     parser.add_argument('--max_grad_norm', type=float, default=0,
                         help='Maximum L2 norm for gradient clipping, default 1.0 (0 to disable clipping)')
     parser.add_argument('--no_cuda', action='store_true', help='Disable CUDA')
 
-    parser.add_argument('--eval_batch_size', type=int, default=20,
+    parser.add_argument('--eval_batch_size', type=int, default=10,
                         help="Batch size to use during evaluation")
     parser.add_argument('--aug_eval', type=int, default=8, help="Number of augmentations in evaluation")
     parser.add_argument('--agent_list', default=[3], help="Number of M in evaluation")
     parser.add_argument('--depot_eval', default=1, help="Number of D in evaluation")
-    parser.add_argument('--r_eval', type=int, default=160, help="Number of permutations in evaluation")
+    parser.add_argument('--r_eval', type=int, default=256, help="Number of permutations in evaluation")
 
     parser.add_argument('--checkpoint_encoder', action='store_true',
                         help='Set to decrease memory usage by checkpointing encoder')

@@ -107,7 +107,8 @@ class MultiHeadAttentionLayer(nn.Module):
             embed_dim,
             hidden_dim,
             val_dim=None,
-            key_dim=None
+            key_dim=None,
+            bias=True,
     ):
         super(MultiHeadAttentionLayer, self).__init__()
 
@@ -124,20 +125,20 @@ class MultiHeadAttentionLayer(nn.Module):
 
         self.norm_factor = 1 / math.sqrt(key_dim)  # See Attention is all you need
 
-        self.Wq_s = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
-        self.Wk_s = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
-        self.Wv_s = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
+        self.Wq_s = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
+        self.Wk_s = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
+        self.Wv_s = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
         self.multi_head_combine_s = nn.Linear(n_heads * val_dim, embed_dim)
         self.addAndNormalizations = Add_And_Normalization_Module(input_dim)
         self.feedForwards = Feed_Forward_Module(input_dim, hidden_dim)
         self.RoPE = RotatePostionalEncoding(embed_dim, 10000)
 
-        self.Wq_dn = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
-        self.Wk_dn = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
-        self.Wv_dn = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
-        self.Wq2_dn = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
-        self.Wk2_dn = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
-        self.Wv2_dn = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
+        self.Wq_dn = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
+        self.Wk_dn = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
+        self.Wv_dn = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
+        self.Wq2_dn = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
+        self.Wk2_dn = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
+        self.Wv2_dn = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
         self.multi_head_combine_dn = nn.Linear(n_heads * val_dim, embed_dim)
         self.multi_head_combine2_dn = nn.Linear(n_heads * val_dim, embed_dim)
         self.addAndNormalization1_dn = Add_And_Normalization_Module(input_dim)
@@ -145,12 +146,12 @@ class MultiHeadAttentionLayer(nn.Module):
         self.addAndNormalization2_dn = Add_And_Normalization_Module(input_dim)
         self.feedForward2_dn = Feed_Forward_Module(input_dim, hidden_dim)
 
-        self.Wq_ad = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
-        self.Wk_ad = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
-        self.Wv_ad = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
-        self.Wq2_ad = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
-        self.Wk2_ad = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
-        self.Wv2_ad = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
+        self.Wq_ad = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
+        self.Wk_ad = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
+        self.Wv_ad = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
+        self.Wq2_ad = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
+        self.Wk2_ad = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
+        self.Wv2_ad = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
         self.multi_head_combine_ad = nn.Linear(n_heads * val_dim, embed_dim)
         self.multi_head_combine2_ad = nn.Linear(n_heads * val_dim, embed_dim)
         self.addAndNormalization1_ad = Add_And_Normalization_Module(input_dim)
@@ -158,12 +159,12 @@ class MultiHeadAttentionLayer(nn.Module):
         self.addAndNormalization2_ad = Add_And_Normalization_Module(input_dim)
         self.feedForward2_ad = Feed_Forward_Module(input_dim, hidden_dim)
 
-        self.Wq_an = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
-        self.Wk_an = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
-        self.Wv_an = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
-        self.Wq2_an = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
-        self.Wk2_an = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
-        self.Wv2_an = nn.Linear(embed_dim, n_heads * val_dim, bias=False)
+        self.Wq_an = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
+        self.Wk_an = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
+        self.Wv_an = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
+        self.Wq2_an = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
+        self.Wk2_an = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
+        self.Wv2_an = nn.Linear(embed_dim, n_heads * val_dim, bias=bias)
         self.multi_head_combine_an = nn.Linear(n_heads * val_dim, embed_dim)
         self.multi_head_combine2_an = nn.Linear(n_heads * val_dim, embed_dim)
         self.addAndNormalization1_an = Add_And_Normalization_Module(input_dim)
@@ -268,7 +269,8 @@ class GraphMAttentionEncoder(nn.Module):
             n_layers,
             node_dim=None,
             normalization='batch',
-            feed_forward_hidden=512
+            feed_forward_hidden=512,
+            bias=True,
     ):
         super(GraphMAttentionEncoder, self).__init__()
 
@@ -276,7 +278,7 @@ class GraphMAttentionEncoder(nn.Module):
         self.init_embed = nn.Linear(node_dim, embed_dim) if node_dim is not None else None
 
         self.layers = nn.Sequential(*(
-            MultiHeadAttentionLayer(n_heads, embed_dim, embed_dim, feed_forward_hidden)
+            MultiHeadAttentionLayer(n_heads, embed_dim, embed_dim, feed_forward_hidden, bias=bias)
             for _ in range(n_layers)
         ))
 
